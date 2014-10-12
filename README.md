@@ -1,4 +1,4 @@
 defargs
 =======
 
-Default Arguments in Haskell
+default arguments in haskell
