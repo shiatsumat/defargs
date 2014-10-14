@@ -1,6 +1,6 @@
 name: defargs
 category: type system
-version: 0.2
+version: 0.3
 license: BSD3
 license-file: LICENSE
 cabal-version: >= 1.10
@@ -12,7 +12,7 @@ homepage: https://github.com/Kinokkory/defargs
 bug-reports: https://github.com/Kinokkory/defargs/issues
 copyright: (c) Yusuke Matsushita 2014
 synopsis:  default arguments in haskell
-description: Default arguments in Haskell. More information can be found in <http://hackage.haskell.org/package/defargs the hackage's haddock> or the <http://kinokkory.github.io/defargs/ updated haddock>.
+description: Default arguments in Haskell. More information can be found in the <http://hackage.haskell.org/package/defargs hackage's haddock> or the <http://kinokkory.github.io/defargs/ updated haddock>.
 
 build-type: Simple
 
@@ -30,6 +30,6 @@ library
             MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
     build-depends:
         base ==4.*,
-        cluss >=0.2
+        cluss >=0.3
     exposed-modules: Type.DefArgs
-    ghc-options: -Wall
+    ghc-options: -Wall -fcontext-stack=40

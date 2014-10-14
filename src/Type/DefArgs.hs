@@ -29,8 +29,7 @@ module Type.DefArgs (
   , defargs6, defargs7, defargs8, defargs9, defargs10
 
     -- * Constraints
-  , DefArg, DefArgs2, DefArgs3, DefArgs4, DefArgs5
-  , DefArgs6, DefArgs7, DefArgs8, DefArgs9, DefArgs10) where
+  , MightBe, type (=?)) where
 
 import Type.Cluss
 
@@ -44,8 +43,6 @@ data a * b = Cons a b
 (&) = Cons
 infixr 0 *, &
 
-type (=?) a = In [Type Def, Type a]
-
 -- core
 class DefArgs' f as where
   type P f as :: [*]
@@ -57,25 +54,17 @@ instance DefArgs' r Nil where
     x `andI`
     noneI :: AllOfI '[Type r])
 instance DefArgs' f as => DefArgs' (a -> f) (a * as) where
-  type P (a -> f) (a * as) = '[Binary (->) ((=?) a >|< K f as)]
+  type P (a -> f) (a * as) = '[Binary (->) (IR1 (In [Type Def, Type a]) >|< K f as)]
   defargs' f (Cons x xs) = projI ((projF (
       (\Def -> defargs' (f x) xs) `andF`
       (\x' -> defargs' (f x') xs) `andF`
       noneF)) `andI2`
     noneI :: AllOfI (P (a -> f) (a * as)))
 
--- the constraints
-type Good f d g = (DefArgs' f d, In (P f d) g)
-type DefArg r a a' = Good (a -> r) (a * Nil) (a' -> r)
-type DefArgs2 r a b a' b' = Good (a -> b -> r) (a * b * Nil) (a' -> b' -> r)
-type DefArgs3 r a b c a' b' c' = Good (a -> b -> c -> r) (a * b * c * Nil) (a' -> b' -> c' -> r)
-type DefArgs4 r a b c d a' b' c' d' = Good (a -> b -> c -> d -> r) (a * b * c * d * Nil) (a' -> b' -> c' -> d' -> r)
-type DefArgs5 r a b c d e a' b' c' d' e' = Good (a -> b -> c -> d -> e -> r) (a * b * c * d * e * Nil) (a' -> b' -> c' -> d' -> e' -> r)
-type DefArgs6 r a b c d e f a' b' c' d' e' f' = Good (a -> b -> c -> d -> e -> f -> r) (a * b * c * d * e * f * Nil) (a' -> b' -> c' -> d' -> e' -> f' -> r)
-type DefArgs7 r a b c d e f g a' b' c' d' e' f' g' = Good (a -> b -> c -> d -> e -> f -> g -> r) (a * b * c * d * e * f * g * Nil) (a' -> b' -> c' -> d' -> e' -> f' -> g' -> r)
-type DefArgs8 r a b c d e f g h a' b' c' d' e' f' g' h' = Good (a -> b -> c -> d -> e -> f -> g -> h -> r) (a * b * c * d * e * f * g * h * Nil) (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> r)
-type DefArgs9 r a b c d e f g h i a' b' c' d' e' f' g' h' i' = Good (a -> b -> c -> d -> e -> f -> g -> h -> i -> r) (a * b * c * d * e * f * g * h * i * Nil) (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> r)
-type DefArgs10 r a b c d e f g h i j a' b' c' d' e' f' g' h' i' j' = Good (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> r) (a * b * c * d * e * f * g * h * i * j * Nil) (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> j' -> r)
+-- constraints
+type MightBe a' a = In [Type Def, Type a] a'
+type a' =? a = MightBe a' a
+infixl 0 =?
 
 -- $converters
 -- Given a function, these converters provide every argument of the function with a default value.
@@ -86,35 +75,38 @@ type DefArgs10 r a b c d e f g h i j a' b' c' d' e' f' g' h' i' j' = Good (a -> 
 -- Internally, the judgment is made by <http://hackage.haskell.org/package/cluss cluss>.
 
 -- converters
-defarg :: DefArg r a a' => (a -> r) -> a -> (a' -> r)
+defarg :: (a' =? a) => (a -> r) -> a -> (a' -> r)
 defarg f x = defargs' f (x & Nil)
-defargs2 :: DefArgs2 r a b a' b' => (a -> b -> r) -> a -> b -> (a' -> b' -> r)
+defargs2 :: (a' =? a, b' =? b) => (a -> b -> r) -> a -> b -> (a' -> b' -> r)
 defargs2 f x x2 = defargs' f (x & x2 & Nil)
-defargs3 :: DefArgs3 r a b c a' b' c' => (a -> b -> c -> r) -> a -> b -> c -> (a' -> b' -> c' -> r)
+defargs3 :: (a' =? a, b' =? b, c' =? c) => (a -> b -> c -> r) -> a -> b -> c -> (a' -> b' -> c' -> r)
 defargs3 f x x2 x3 = defargs' f (x & x2 & x3 & Nil)
-defargs4 :: DefArgs4 r a b c d a' b' c' d' => (a -> b -> c -> d -> r) -> a -> b -> c -> d -> (a' -> b' -> c' -> d' -> r)
+defargs4 :: (a' =? a, b' =? b, c' =? c, d' =? d) => (a -> b -> c -> d -> r) -> a -> b -> c -> d -> (a' -> b' -> c' -> d' -> r)
 defargs4 f x x2 x3 x4 = defargs' f (x & x2 & x3 & x4 & Nil)
-defargs5 :: DefArgs5 r a b c d e a' b' c' d' e' => (a -> b -> c -> d -> e -> r) -> a -> b -> c -> d -> e -> (a' -> b' -> c' -> d' -> e' -> r)
+defargs5 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e) => (a -> b -> c -> d -> e -> r) -> a -> b -> c -> d -> e -> (a' -> b' -> c' -> d' -> e' -> r)
 defargs5 f x x2 x3 x4 x5 = defargs' f (x & x2 & x3 & x4 & x5 & Nil)
-defargs6 :: DefArgs6 r a b c d e f a' b' c' d' e' f' => (a -> b -> c -> d -> e -> f -> r) -> a -> b -> c -> d -> e -> f -> (a' -> b' -> c' -> d' -> e' -> f' -> r)
+defargs6 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e, f' =? f) => (a -> b -> c -> d -> e -> f -> r) -> a -> b -> c -> d -> e -> f -> (a' -> b' -> c' -> d' -> e' -> f' -> r)
 defargs6 f x x2 x3 x4 x5 x6 = defargs' f (x & x2 & x3 & x4 & x5 & x6 & Nil)
-defargs7 :: DefArgs7 r a b c d e f g a' b' c' d' e' f' g' => (a -> b -> c -> d -> e -> f -> g -> r) -> a -> b -> c -> d -> e -> f -> g -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> r)
+defargs7 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e, f' =? f, g' =? g) => (a -> b -> c -> d -> e -> f -> g -> r) -> a -> b -> c -> d -> e -> f -> g -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> r)
 defargs7 f x x2 x3 x4 x5 x6 x7 = defargs' f (x & x2 & x3 & x4 & x5 & x6 & x7 & Nil)
-defargs8 :: DefArgs8 r a b c d e f g h a' b' c' d' e' f' g' h' => (a -> b -> c -> d -> e -> f -> g -> h -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> r)
+defargs8 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e, f' =? f, g' =? g, h' =? h) => (a -> b -> c -> d -> e -> f -> g -> h -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> r)
 defargs8 f x x2 x3 x4 x5 x6 x7 x8 = defargs' f (x & x2 & x3 & x4 & x5 & x6 & x7 & x8 & Nil)
-defargs9 :: DefArgs9 r a b c d e f g h i a' b' c' d' e' f' g' h' i' => (a -> b -> c -> d -> e -> f -> g -> h -> i -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> r)
+defargs9 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e, f' =? f, g' =? g, h' =? h, i' =? i) => (a -> b -> c -> d -> e -> f -> g -> h -> i -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> r)
 defargs9 f x x2 x3 x4 x5 x6 x7 x8 x9 = defargs' f (x & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & Nil)
-defargs10 :: DefArgs10 r a b c d e f g h i j a' b' c' d' e' f' g' h' i' j' => (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> j' -> r)
+defargs10 :: (a' =? a, b' =? b, c' =? c, d' =? d, e' =? e, f' =? f, g' =? g, h' =? h, i' =? i, j' =? j) => (a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> r) -> a -> b -> c -> d -> e -> f -> g -> h -> i -> j -> (a' -> b' -> c' -> d' -> e' -> f' -> g' -> h' -> i' -> j' -> r)
 defargs10 f x x2 x3 x4 x5 x6 x7 x8 x9 x10 = defargs' f (x & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & Nil)
 
 -- $example
 -- Here is a simple example.
 --
--- >{-# LANGUAGE NoMonomorphismRestriction #-}
+-- >{-# LANGUAGE TypeOperators, FlexibleContexts #-}
 -- >
 -- >import Type.DefArgs
 -- >
+-- >test :: (s =? String, s' =? String) => s -> s' -> String
 -- >test = defargs2 (\x y -> x ++ ", " ++ y ++ "!") "hello" "world"
+-- >
+-- >test2 :: (i =? Int, i' =? Int) => i -> i' -> Int
 -- >test2 = defargs2 (+) (10 :: Int) 100
 -- >
 -- >main = do
